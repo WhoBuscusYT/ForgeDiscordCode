@@ -1,0 +1,33 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="All Rights Reserved"
+[[mods]]
+modId="forgediscord"
+version="1.0.0"
+displayName="Forge Discord"
+authors="WhoBuscusYT"
+description='''The mod version of the well know Paper plugin DiscordSRV. This mod is not made by the developers of the plugin.'''
+[[dependencies.forgediscord]]
+modId="forge"
+mandatory=true
+versionRange="[47,)"
+ordering="NONE"
+side="BOTH"
+[[dependencies.forgediscord]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.20.1]"
+ordering="NONE"
+side="BOTH"
+[[dependencies.forgediscord]]
+modId="luckperms"
+mandatory=false
+versionRange="[5.4,6)"
+ordering="AFTER"
+side="BOTH"
+[[dependencies.forgediscord]]
+modId="jdadependencymod"
+mandatory=false
+versionRange="[1.0.57,)"
+ordering="NONE"
+side="BOTH"
