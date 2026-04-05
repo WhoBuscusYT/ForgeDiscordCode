@@ -1,2 +1,1 @@
-# ForgeDiscordCode
-The code that is used in the Minecraft Forge mod, Forge Discord.
+This is my first time making an open source code mod, so I don't know if I put the right files on here, but this is all the code for the Minecraft Forge mod, ForgeDiscord. This is the first mod of the Discord series, with the other two being FabricDiscord and NeoDiscord. This mod is a modded version of the well known Paper/Spigot plugin, DiscordSRV.
