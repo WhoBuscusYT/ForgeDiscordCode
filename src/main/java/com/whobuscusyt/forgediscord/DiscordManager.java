@@ -1,4 +1,4 @@
-package com.whobuscusyt.forgediscord;
+package com.whobuscusyt.forgediscord.Discord;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -8,7 +8,10 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.server.ServerLifecycleHooks;
 import net.minecraft.network.chat.Component;
-import net.dv8tion.jda.api.OnlineStatus;
+import java.lang.management.ManagementFactory;
+import com.sun.management.OperatingSystemMXBean;
+import net.dv8tion.jda.api.entities.Activity;
+import com.whobuscusyt.forgediscord.Config;
 
 public class DiscordManager {
 
@@ -24,7 +27,7 @@ public class DiscordManager {
     }
 
     public static boolean connect(String token) {
-        if (jda != null) return true; // 👈 prevents duplicate init
+        if (jda != null) return true;
 
         try {
             jda = JDABuilder.createDefault(token)
@@ -33,7 +36,15 @@ public class DiscordManager {
 
             jda.awaitReady();
 
+            jda.getPresence().setStatus(getStatus(Config.STATUS.get()));
+            jda.getPresence().setActivity(
+                    getActivity(Config.ACTIVITY_TYPE.get(), Config.ACTIVITY_TEXT.get())
+            );
+
+            startMonitoring();
+
             return true;
+
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -107,5 +118,68 @@ public class DiscordManager {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+    public static void startMonitoring() {
+        new Thread(() -> {
+            while (true) {
+                try {
+                    Thread.sleep(60000); // every 60s
+
+                    checkUsage();
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+    private static void sendAlert(int ram, int cpu) {
+        String ownerId = Config.OWNER_ID.get();
+
+        String msg =
+                "⚠️ **HIGH SERVER USAGE!**\n"
+                 + "RAM: " + ram + "%\n"
+                 + "CPU: " + cpu + "%\n"
+                 + "<@" + ownerId + ">";
+
+        sendMessage(msg);
+    }
+    private static void checkUsage() {
+        if (jda == null) return;
+
+        long maxRam = Runtime.getRuntime().maxMemory();
+        long usedRam = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        int ramPercent = (int) ((usedRam * 100) / maxRam);
+
+        double cpuLoad = getCpuLoad();
+        int cpuPercent = (int) (cpuLoad * 100);
+
+        if (ramPercent >= 90 || cpuPercent >= 90) {
+            sendAlert(ramPercent, cpuPercent);
+        }
+    }
+    private static double getCpuLoad() {
+        try {
+            OperatingSystemMXBean osBean =
+                    (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+
+            double load = osBean.getCpuLoad();
+
+            if (load < 0) return 0;
+
+            return load;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+    private static Activity getActivity(String type, String text) {
+        if (text == null || text.isBlank()) return null;
+
+        return switch (type.toUpperCase()) {
+            case "WATCHING" -> Activity.watching(text);
+            case "LISTENING" -> Activity.listening(text);
+            case "COMPETING" -> Activity.competing(text);
+            default -> Activity.playing(text);
+        };
     }
 }
