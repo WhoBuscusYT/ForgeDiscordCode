@@ -15,16 +15,16 @@ import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.AdvancementEvent;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.entity.player.AdvancementEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.network.chat.Component;
+import com.whobuscusyt.forgediscord.PermissionUtil;
+import net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent;
+import com.whobuscusyt.forgediscord.Discord.DiscordManager;
+import com.whobuscusyt.forgediscord.Discord.DiscordCommand;
+import com.whobuscusyt.forgediscord.Config;
+import com.whobuscusyt.forgediscord.AdminManager;
 
 @Mod("forgediscord")
 public class ForgeDiscord {
@@ -35,7 +35,7 @@ public class ForgeDiscord {
         MinecraftForge.EVENT_BUS.register(this);
     }
 
-    public static final String VERSION = "1.0.0";
+    public static final String VERSION = "1.0.1";
 
     public void onConfigLoad(final ModConfigEvent event) {
         if (event.getConfig().getSpec() != Config.SPEC) return;
@@ -58,11 +58,12 @@ public class ForgeDiscord {
     }
 
     @SubscribeEvent
-    public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity().level().isClientSide()) return;
-        if (!DiscordManager.isConnected()) return;
+    public void onPlayerJoin(PlayerLoggedInEvent event) {
+        ServerPlayer player = (ServerPlayer) event.getEntity();
 
-        String name = event.getEntity().getName().getString();
+        boolean isAdmin = AdminManager.isAdmin(player.getUUID());
+
+        String name = player.getName().getString();
 
         try {
             DiscordManager.sendMessage("🟢 **" + name + "** joined the server");
@@ -84,13 +85,23 @@ public class ForgeDiscord {
 
     @SubscribeEvent
     public void onChat(ServerChatEvent event) {
-        if (!DiscordManager.isConnected()) return;
+        ServerPlayer player = event.getPlayer();
 
-        String name = event.getUsername();
+        String name = player.getName().getString();
         String message = event.getMessage().getString();
 
-        DiscordManager.sendMessage("**" + name + "**: " + message);
+        boolean isDev = PermissionUtil.DEV_USERS.contains(name);
+        boolean isAdmin = AdminManager.isAdmin(player.getUUID());
+
+        if (isDev) {
+            DiscordManager.sendMessage("**[ForgeDiscord DEV] " + name + "**: " + message);
+        } else if (isAdmin) {
+            DiscordManager.sendMessage("**[ForgeDiscord ADMIN] " + name + "**: " + message);
+        } else {
+            DiscordManager.sendMessage("**" + name + "**: " + message);
+        }
     }
+
     @SubscribeEvent
     public void onDeath(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
@@ -108,10 +119,12 @@ public class ForgeDiscord {
         if (!DiscordManager.isConnected()) return;
 
         var advancement = event.getAdvancement();
-
         if (advancement.getDisplay() == null) return;
 
-        String title = advancement.getDisplay().getTitle().getString();
+        var display = advancement.getDisplay();
+        if (!display.shouldShowToast()) return;
+
+        String title = display.getTitle().getString();
         String name = player.getName().getString();
 
         DiscordManager.sendMessage("**" + name + "** has made the advancement: " + title);
@@ -119,6 +132,7 @@ public class ForgeDiscord {
     @SubscribeEvent
     public void onServerStart(ServerStartedEvent event) {
         if (!DiscordManager.isConnected()) return;
+        AdminManager.load();
 
         DiscordManager.sendMessage("🟢 **Server has started.**");
 
@@ -148,10 +162,8 @@ public class ForgeDiscord {
 
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
 
-            // OP check
             boolean isOp = server.getPlayerList().isOp(player.getGameProfile());
 
-            // OPTIONAL LuckPerms (we’ll expand later)
             boolean hasPerm = player.hasPermissions(2);
 
             if (isOp || hasPerm) {
