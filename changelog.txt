@@ -10,3 +10,5 @@
 - made the high server usage ping only ping for RAM and not CPU
 - added the ability to use webhooks for player chats
 - fixed the discord -> minecraft chat not working
+- added it to show the death reason for dying and not just "Player died"
+- changed the way the high server usage message displays in discord

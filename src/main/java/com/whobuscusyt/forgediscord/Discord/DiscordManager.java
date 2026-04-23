@@ -28,25 +28,22 @@ public class DiscordManager {
     }
 
     public static boolean connect(String token) {
+        if (jda != null) {
+            System.out.println("[ForgeDiscord] Already connected, skipping...");
+            return true;
+        }
+
         try {
             jda = JDABuilder.createDefault(token)
                     .enableIntents(GatewayIntent.MESSAGE_CONTENT)
-                    .addEventListeners(new DiscordListener()) // also needed
+                    .addEventListeners(new DiscordListener())
                     .build();
 
             new Thread(() -> {
                 try {
                     jda.awaitReady();
-
-                    jda.getPresence().setStatus(getStatus(Config.STATUS.get()));
-                    jda.getPresence().setActivity(
-                            getActivity(Config.ACTIVITY_TYPE.get(), Config.ACTIVITY_TEXT.get())
-                    );
-
                     System.out.println("[ForgeDiscord] Bot connected!");
-
                 } catch (Exception e) {
-                    System.out.println("[ForgeDiscord] Failed to connect bot:");
                     e.printStackTrace();
                 }
             }).start();
@@ -54,7 +51,6 @@ public class DiscordManager {
             return true;
 
         } catch (Exception e) {
-            System.out.println("[ForgeDiscord] CRITICAL ERROR (safe fallback):");
             e.printStackTrace();
             return false;
         }
@@ -143,14 +139,13 @@ public class DiscordManager {
             }
         }).start();
     }
-    private static void sendAlert(int ram, int cpu) {
+    public static void sendAlert(int ram) {
         String ownerId = Config.OWNER_ID.get();
 
         String msg =
-                "⚠️ **HIGH SERVER USAGE!**\n"
-                 + "RAM: " + ram + "%\n"
-                 + "CPU: " + cpu + "%\n"
-                 + "<@" + ownerId + ">";
+                "**High Server Usage!**\n"
+                + "RAM: " + ram + "% (" + getUsedRam() + "MB/" + getMaxRam() + "MB)\n"
+                + "<@" + ownerId + ">";
 
         sendMessage(msg);
     }
@@ -164,8 +159,8 @@ public class DiscordManager {
         double cpuLoad = getCpuLoad();
         int cpuPercent = (int) (cpuLoad * 100);
 
-        if (ramPercent >= 90 || cpuPercent >= 90) {
-            sendAlert(ramPercent, cpuPercent);
+        if (ramPercent >= 90) {
+            sendAlert(ramPercent);
         }
     }
     private static double getCpuLoad() {
@@ -182,6 +177,7 @@ public class DiscordManager {
             return 0;
         }
     }
+
     private static Activity getActivity(String type, String text) {
         if (text == null || text.isBlank()) return null;
 
@@ -205,5 +201,19 @@ public class DiscordManager {
                 channel.sendMessage("```" + msg + "```").queue();
             }
         } catch (Exception ignored) {}
+    }
+    public static long getUsedRam() {
+        Runtime runtime = Runtime.getRuntime();
+        return runtime.totalMemory() - runtime.freeMemory() / 1024;
+    }
+
+    public static long getMaxRam() {
+        return Runtime.getRuntime().maxMemory() / 1024;
+    }
+
+    public static int getRamPercent() {
+        long used = getUsedRam();
+        long max = getMaxRam();
+        return (int)((used * 100) / max);
     }
 }

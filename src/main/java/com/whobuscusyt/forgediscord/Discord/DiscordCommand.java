@@ -19,9 +19,9 @@ public class DiscordCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
-                Commands.literal("discord")
+                Commands.literal("Discord")
 
-                        .then(Commands.literal("bot")
+                        .then(Commands.literal("Bot")
                                 .requires(source ->
                                         source.hasPermission(2) ||
                                                 isDev(source) ||
@@ -40,7 +40,7 @@ public class DiscordCommand {
                                 })
                         )
 
-                        .then(Commands.literal("reload")
+                        .then(Commands.literal("Reload")
                                 .requires(source ->
                                         source.hasPermission(2) ||
                                                 isDev(source) ||
@@ -55,7 +55,7 @@ public class DiscordCommand {
                                     return 1;
                                 })
                         )
-                        .then(Commands.literal("servstats")
+                        .then(Commands.literal("Server Stats")
                                 .requires(source ->
                                         source.hasPermission(2) ||
                                                 isDev(source) ||
@@ -66,32 +66,42 @@ public class DiscordCommand {
                                     return 1;
                                 })
                         )
-                        .then(Commands.literal("test")
+                        .then(Commands.literal("Test")
                                 .requires(source ->
                                         source.hasPermission(2) ||
                                                 isDev(source) ||
                                                 isForgeDiscordAdmin(source)
                                 )
-                                .then(Commands.literal("join")
+                                .then(Commands.literal("Join")
                                         .executes(ctx -> {
                                             DiscordManager.sendMessage("🟢 **ForgeDiscord** joined the server!");
                                             return 1;
                                         })
                                 )
 
-                                .then(Commands.literal("leave")
+                                .then(Commands.literal("Leave")
                                         .executes(ctx -> {
                                             DiscordManager.sendMessage("🔴 **ForgeDiscord** left the server!");
                                             return 1;
                                         })
                                 )
 
-                                .then(Commands.literal("message")
-                                        .then(Commands.argument("msg", StringArgumentType.greedyString())
+                                .then(Commands.literal("Message")
+                                        .then(Commands.argument("<message>", StringArgumentType.greedyString())
                                                 .executes(ctx -> {
-                                                    String msg = StringArgumentType.getString(ctx, "msg");
-
-                                                    DiscordManager.sendMessage("**ForgeDiscord**: " + msg);
+                                                    spikeRamForTest();
+                                                    return 1;
+                                                })
+                                        )
+                                )
+                                .then(Commands.literal("Alert")
+                                        .executes(ctx -> {
+                                            Component.literal(Config.MOD_PREFIX.get() + "§4WARNING: This could crash your server if you spike RAM during this process. to confirm this action, do /discord test alert confirm");
+                                            return 1;
+                                        })
+                                        .then(Commands.literal("Confirm")
+                                                .executes(ctx -> {
+                                                    spikeRamForTest();
                                                     return 1;
                                                 })
                                         )
@@ -284,12 +294,15 @@ public class DiscordCommand {
                 cpuColor + "CPU: " + cpuPercent + "%/100% (" + cpuPercent + "%)"
         ), false);
     }
+
     private static String getColor(int percent) {
         if (percent >= 75) return "§c";
         if (percent >= 50) return "§6";
         if (percent <= 25) return "§a";
         return "§f";
     }
+
+
     private static double getCpuLoad() {
         try {
             OperatingSystemMXBean osBean =
@@ -304,6 +317,38 @@ public class DiscordCommand {
             return 0;
         }
     }
+
+    public static void spikeRamForTest() {
+        new Thread(() -> {
+            try {
+                long max = Runtime.getRuntime().maxMemory();
+                long target = (long)(max * 0.91);
+
+                java.util.List<byte[]> allocations = new java.util.ArrayList<>();
+
+                while (DiscordManager.getUsedRam() < target) {
+                    allocations.add(new byte[5_000_000]);
+                    Thread.sleep(10);
+                }
+
+                System.out.println("[ForgeDiscord] RAM spike reached target");
+
+                DiscordManager.sendAlert((int)((DiscordManager.getUsedRam() * 100) / max));
+
+                Thread.sleep(2000);
+
+                allocations.clear();
+
+                System.gc();
+
+                System.out.println("[ForgeDiscord] RAM released");
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
     private static boolean isDev(CommandSourceStack source) {
         try {
             String name = source.getPlayerOrException().getName().getString();

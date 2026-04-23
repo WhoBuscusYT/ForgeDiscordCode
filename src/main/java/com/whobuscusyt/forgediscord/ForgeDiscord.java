@@ -25,6 +25,9 @@ import com.whobuscusyt.forgediscord.Discord.DiscordManager;
 import com.whobuscusyt.forgediscord.Discord.DiscordCommand;
 import com.whobuscusyt.forgediscord.Config;
 import com.whobuscusyt.forgediscord.AdminManager;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraft.server.level.ServerPlayer;
 
 @Mod("forgediscord")
 public class ForgeDiscord {
@@ -108,9 +111,9 @@ public class ForgeDiscord {
 
         if (!DiscordManager.isConnected()) return;
 
-        String name = player.getName().getString();
+        String deathMessage = player.getCombatTracker().getDeathMessage().getString();
 
-        DiscordManager.sendMessage("**" + name + "** died");
+        DiscordManager.sendMessage("" + deathMessage);
     }
     @SubscribeEvent
     public void onAdvancement(AdvancementEvent event) {
@@ -185,10 +188,10 @@ public class ForgeDiscord {
                     cmd
             );
 
-            sendConsole("[EXECUTED] " + cmd);
+            DiscordManager.sendConsole("[EXECUTED] " + cmd);
 
         } catch (Exception e) {
-            sendConsole("[ERROR] " + e.getMessage());
+            DiscordManager.sendConsole("[ERROR] " + e.getMessage());
         }
     }
 }
