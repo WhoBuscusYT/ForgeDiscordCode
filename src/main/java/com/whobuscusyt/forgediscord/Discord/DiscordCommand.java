@@ -19,9 +19,9 @@ public class DiscordCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
-                Commands.literal("Discord")
+                Commands.literal("discord")
 
-                        .then(Commands.literal("Bot")
+                        .then(Commands.literal("bot")
                                 .requires(source ->
                                         source.hasPermission(2) ||
                                                 isDev(source) ||
@@ -40,7 +40,7 @@ public class DiscordCommand {
                                 })
                         )
 
-                        .then(Commands.literal("Reload")
+                        .then(Commands.literal("reload")
                                 .requires(source ->
                                         source.hasPermission(2) ||
                                                 isDev(source) ||
@@ -55,7 +55,7 @@ public class DiscordCommand {
                                     return 1;
                                 })
                         )
-                        .then(Commands.literal("Server Stats")
+                        .then(Commands.literal("server stats")
                                 .requires(source ->
                                         source.hasPermission(2) ||
                                                 isDev(source) ||
@@ -66,27 +66,27 @@ public class DiscordCommand {
                                     return 1;
                                 })
                         )
-                        .then(Commands.literal("Test")
+                        .then(Commands.literal("test")
                                 .requires(source ->
                                         source.hasPermission(2) ||
                                                 isDev(source) ||
                                                 isForgeDiscordAdmin(source)
                                 )
-                                .then(Commands.literal("Join")
+                                .then(Commands.literal("join")
                                         .executes(ctx -> {
                                             DiscordManager.sendMessage("🟢 **ForgeDiscord** joined the server!");
                                             return 1;
                                         })
                                 )
 
-                                .then(Commands.literal("Leave")
+                                .then(Commands.literal("leave")
                                         .executes(ctx -> {
                                             DiscordManager.sendMessage("🔴 **ForgeDiscord** left the server!");
                                             return 1;
                                         })
                                 )
 
-                                .then(Commands.literal("Message")
+                                .then(Commands.literal("message")
                                         .then(Commands.argument("<message>", StringArgumentType.greedyString())
                                                 .executes(ctx -> {
                                                     spikeRamForTest();
@@ -94,12 +94,12 @@ public class DiscordCommand {
                                                 })
                                         )
                                 )
-                                .then(Commands.literal("Alert")
+                                .then(Commands.literal("alert")
                                         .executes(ctx -> {
                                             Component.literal(Config.MOD_PREFIX.get() + "§4WARNING: This could crash your server if you spike RAM during this process. to confirm this action, do /discord test alert confirm");
                                             return 1;
                                         })
-                                        .then(Commands.literal("Confirm")
+                                        .then(Commands.literal("confirm")
                                                 .executes(ctx -> {
                                                     spikeRamForTest();
                                                     return 1;

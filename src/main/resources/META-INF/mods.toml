@@ -3,7 +3,7 @@ loaderVersion="[47,)"
 license="All Rights Reserved"
 [[mods]]
 modId="forgediscord"
-version="1.0.2"
+version="1.0.2.1"
 displayName="Forge Discord"
 authors="WhoBuscusYT"
 description='''The mod version of the well know Paper plugin DiscordSRV. This mod is not made by the developers of the plugin.'''
