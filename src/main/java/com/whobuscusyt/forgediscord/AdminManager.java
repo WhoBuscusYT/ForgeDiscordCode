@@ -13,7 +13,7 @@ import java.util.UUID;
 public class AdminManager {
 
     private static final Set<UUID> ADMINS = new HashSet<>();
-    private static final File FILE = new File("config/forgediscord_admins.json");
+    private static final File FILE = new File("config/ForgeDiscord/admins.json");
     private static final Gson GSON = new Gson();
 
     public static void load() {
@@ -28,8 +28,10 @@ public class AdminManager {
 
             ADMINS.clear();
 
-            for (String s : data) {
-                ADMINS.add(UUID.fromString(s));
+            if (data != null) {
+                for (String s : data) {
+                    ADMINS.add(UUID.fromString(s));
+                }
             }
 
         } catch (Exception e) {

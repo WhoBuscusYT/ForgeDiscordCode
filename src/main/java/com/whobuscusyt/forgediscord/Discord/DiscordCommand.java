@@ -1,7 +1,7 @@
 package com.whobuscusyt.forgediscord.Discord;
 
 import com.mojang.brigadier.CommandDispatcher;
-import com.whobuscusyt.forgediscord.Config;
+import com.whobuscusyt.forgediscord.*;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -12,14 +12,106 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.server.ServerLifecycleHooks;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.commands.arguments.EntityArgument;
-import com.whobuscusyt.forgediscord.AdminManager;
-import static net.dv8tion.jda.api.OnlineStatus.ONLINE;
+import java.lang.String;
 
 public class DiscordCommand {
 
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+    public static void register(
+            CommandDispatcher<CommandSourceStack> dispatcher
+    ) {
+
+        registerCommand(
+                dispatcher,
+                "discord"
+        );
+
+        registerCommand(
+                dispatcher,
+                "forgediscord"
+        );
+    }
+
+    private static void registerCommand(
+            CommandDispatcher<CommandSourceStack> dispatcher,
+            String name
+    ) {
+
         dispatcher.register(
-                Commands.literal("discord")
+
+                Commands.literal(name)
+                        .executes(context -> {
+                            context.getSource()
+                                    .sendSystemMessage(
+
+                                            Component.literal(
+
+                                                    "§9§lForgeDiscord\n"
+                                                            + "§7Version: " + ForgeDiscord.VERSION + "\n\n"
+                                                            + "§bDiscord Invite: " + Config.DISCORD_INVITE.get() + "\n\n"
+                                                            + "§b/discord help"
+                                            )
+                                    );
+
+                            return 1;
+                        })
+
+                        .then(Commands.literal("help")
+
+                                .executes(context -> {
+
+                                    boolean isAdmin =
+                                            PermissionUtil.hasPermission(context.getSource());
+
+                                    String status =
+                                            isAdmin
+                                                    ? "§4Admin"
+                                                    : "§2Not An Admin";
+
+                                    String commands =
+                                            isAdmin
+                                                    ?
+
+                                                    "§b/discord reload\n"
+                                                            + "§b/discord unlink\n"
+                                                            + "§b/discord admin\n"
+                                                            + "§b/discord config\n"
+                                                            + "§b/discord console\n"
+                                                            + "§b/discord servstats"
+                                                    :
+
+                                                    "§b/discord link\n";
+
+                                    context.getSource()
+                                            .sendSystemMessage(
+
+                                                    Component.literal(
+
+                                                            centerText("§9§lForgeDiscord\n")
+
+                                                                    + "§bForgeDiscord is a Forge 1.20.1 mod that allows you to easily connect your Discord bot to your Minecraft server to monitor things like chat, leaves, joins, deaths, etc.\n\n"
+
+                                                                    + "§b§lCurrent Mod Version: §r§bv" + ForgeDiscord.VERSION + "\n\n"
+
+                                                                    + "§b§lPermission Status: " + "§r" + status + "\n\n"
+
+                                                                    + "§b§lCOMMANDS:\n\n"
+
+                                                                    + commands
+                                                    )
+                                            );
+
+                                    return 1;
+                                }))
+
+                        .then(Commands.literal("invite")
+                                .executes(context -> {
+                                    context.getSource().sendSystemMessage(
+                                            Component.literal(
+                                                    Config.MOD_PREFIX.get() + " §bDiscord Invite: §a" + Config.DISCORD_INVITE.get()
+                                            )
+                                    );
+                                    return 1;
+                                }))
 
                         .then(Commands.literal("bot")
                                 .requires(source ->
@@ -29,12 +121,12 @@ public class DiscordCommand {
                                 )
                                 .executes(ctx -> {
                                     if (DiscordManager.isConnected()) {
-                                        String name = DiscordManager.getBotName();
+                                        String botName = DiscordManager.getBotName();
                                         ctx.getSource().sendSuccess(() ->
-                                                Component.literal("Connected to: " + name), false);
+                                                Component.literal(Config.MOD_PREFIX.get() + "§b Connected to: " + botName), false);
                                     } else {
                                         ctx.getSource().sendFailure(
-                                                Component.literal("Couldn't find any bot with that token, make sure the token is right."));
+                                                Component.literal(Config.MOD_PREFIX.get() + "§4 Couldn't find any bot with that token, make sure the token is right."));
                                     }
                                     return 1;
                                 })
@@ -47,7 +139,7 @@ public class DiscordCommand {
                                                 isForgeDiscordAdmin(source)
                                 )
                                 .executes(ctx -> {
-                                    DiscordManager.reloadPresence();
+                                    DiscordManager.reload();
 
                                     ctx.getSource().sendSuccess(() ->
                                             Component.literal(Config.MOD_PREFIX.get() + " §bMod Reloaded!"), false);
@@ -55,7 +147,7 @@ public class DiscordCommand {
                                     return 1;
                                 })
                         )
-                        .then(Commands.literal("server stats")
+                        .then(Commands.literal("servstats")
                                 .requires(source ->
                                         source.hasPermission(2) ||
                                                 isDev(source) ||
@@ -85,18 +177,12 @@ public class DiscordCommand {
                                             return 1;
                                         })
                                 )
-
-                                .then(Commands.literal("message")
-                                        .then(Commands.argument("<message>", StringArgumentType.greedyString())
-                                                .executes(ctx -> {
-                                                    spikeRamForTest();
-                                                    return 1;
-                                                })
-                                        )
-                                )
                                 .then(Commands.literal("alert")
-                                        .executes(ctx -> {
-                                            Component.literal(Config.MOD_PREFIX.get() + "§4WARNING: This could crash your server if you spike RAM during this process. to confirm this action, do /discord test alert confirm");
+                                        .executes(context -> {
+                                            context.getSource()
+                                             .sendSystemMessage(
+                                                     Component.literal(Config.MOD_PREFIX.get() + "§4 WARNING: This could crash your server if you spike RAM during this process. to confirm this action, do /discord test alert confirm")
+                                             );
                                             return 1;
                                         })
                                         .then(Commands.literal("confirm")
@@ -115,10 +201,25 @@ public class DiscordCommand {
                                 )
 
                                 .then(Commands.argument("cmd", StringArgumentType.greedyString())
-                                        .executes(ctx -> {
-                                            String cmd = StringArgumentType.getString(ctx, "cmd");
+                                        .executes(context -> {
+                                            String cmd = StringArgumentType.getString(context, "cmd");
 
-                                            runConsoleCommand(ctx.getSource(), cmd);
+                                            CommandSourceStack source =
+                                                    context.getSource();
+
+                                            runConsoleCommand(context.getSource(), cmd);
+
+                                            for (ServerPlayer player
+                                                    : source.getServer()
+                                                    .getPlayerList()
+                                                    .getPlayers()) {
+
+                                                player.sendSystemMessage(
+                                                        Component.literal(
+                                                                Config.MOD_PREFIX.get() + "§b Executed console command: §a" + cmd
+                                                        )
+                                                );
+                                            }
 
                                             return 1;
                                         })
@@ -135,14 +236,14 @@ public class DiscordCommand {
                                                     ServerPlayer target = EntityArgument.getPlayer(ctx, "player");
 
                                                     if (AdminManager.isAdmin(target.getUUID())) {
-                                                        ctx.getSource().sendFailure(Component.literal(Config.MOD_PREFIX.get() + " §b" + target.getName() + " couldn't be added as an admin!"));
+                                                        ctx.getSource().sendFailure(Component.literal(Config.MOD_PREFIX.get() + " §b" + target.getName().getString() + " couldn't be added as an admin!"));
                                                         return 0;
                                                     }
 
                                                     AdminManager.add(target.getUUID());
 
                                                     ctx.getSource().sendSuccess(() ->
-                                                            Component.literal(Config.MOD_PREFIX.get() + " §a" + target.getName() + " was successfully added as an admin!"), false);
+                                                            Component.literal(Config.MOD_PREFIX.get() + " §a" + target.getName().getString() + " was successfully added as an admin!"), false);
 
                                                     return 1;
                                                 })
@@ -155,14 +256,14 @@ public class DiscordCommand {
                                                     ServerPlayer target = EntityArgument.getPlayer(ctx, "player");
 
                                                     if (!AdminManager.isAdmin(target.getUUID())) {
-                                                        ctx.getSource().sendFailure(Component.literal(Config.MOD_PREFIX.get() + " §b" + target.getName() + " doesn't appear to be an admin!"));
+                                                        ctx.getSource().sendFailure(Component.literal(Config.MOD_PREFIX.get() + " §b" + target.getName().getString() + " doesn't appear to be an admin!"));
                                                         return 0;
                                                     }
 
                                                     AdminManager.remove(target.getUUID());
 
                                                     ctx.getSource().sendSuccess(() ->
-                                                            Component.literal(Config.MOD_PREFIX.get() + " §aYou have successfully removed" + target.getName() + "!"), false);
+                                                            Component.literal(Config.MOD_PREFIX.get() + " §aYou have successfully removed " + target.getName().getString() + "!"), false);
 
                                                     return 1;
                                                 })
@@ -176,126 +277,310 @@ public class DiscordCommand {
                                         })
                                 )
                         )
-                        .then(Commands.literal("Config")
+                        .then(Commands.literal("config")
                                 .requires(source ->
-                                        source.hasPermission(2) ||
-                                                isDev(source) ||
-                                                isForgeDiscordAdmin(source)
+                                        PermissionUtil.hasPermission(source)
                                 )
-                                .then(Commands.literal("Bot Token")
-                                        .then(Commands.argument("<Token>", StringArgumentType.greedyString())
+                                .then(Commands.literal("status")
+                                        .then(Commands.argument("value", StringArgumentType.word())
                                                 .executes(ctx -> {
-                                                    String Token = StringArgumentType.getString(ctx, "<Token>");
-
-                                                    Config.DISCORD_TOKEN.set(Token);
-                                                    return 1;
-                                                })
-                                        )
-                                )
-                                .then(Commands.literal("Mod Prefix")
-                                        .then(Commands.argument("<Prefix>", StringArgumentType.greedyString())
-                                                .executes(ctx -> {
-                                                    String Prefix = StringArgumentType.getString(ctx, "<Prefix>");
-
-                                                    Config.MOD_PREFIX.set(Prefix);
+                                                    String value = StringArgumentType.getString(ctx, "value");
+                                                    Config.STATUS.set(value);
+                                                    DiscordManager.reload();
+                                                    ctx.getSource().sendSuccess(
+                                                            () -> Component.literal(Config.MOD_PREFIX.get() + " §bStatus set to §a" + value),
+                                                            false
+                                                    );
                                                     return 1;
                                                 })
                                         )
                                 )
-                                .then(Commands.literal("Status")
-                                        .then(Commands.argument("Online", StringArgumentType.greedyString())
+                                .then(Commands.literal("channel")
+                                        .then(Commands.argument("id", StringArgumentType.word())
                                                 .executes(ctx -> {
-                                                    Config.STATUS.set("ONLINE");
-                                                    return 1;
-                                                })
-                                        )
-                                        .then(Commands.argument("Idle", StringArgumentType.greedyString())
-                                                .executes(ctx -> {
-                                                    Config.STATUS.set("IDLE");
-                                                    return 1;
-                                                })
-
-                                        )
-                                        .then(Commands.argument("Do Not Disturb (DND)", StringArgumentType.greedyString())
-                                                .executes(ctx -> {
-                                                    Config.STATUS.set("DND");
-                                                    return 1;
-                                                })
-
-                                        )
-                                        .then(Commands.argument("Invisible (Offline)", StringArgumentType.greedyString())
-                                                .executes(ctx -> {
-                                                    Config.STATUS.set("INVISIBLE");
-                                                    return 1;
-                                                })
-
-                                        )
-                                )
-                                .then(Commands.literal("Channel ID")
-                                        .then(Commands.argument("ID", StringArgumentType.greedyString())
-                                                .executes(ctx -> {
-                                                    String ID = StringArgumentType.getString(ctx, "ID");
-
-                                                    Config.CHANNEL_ID.set(ID);
+                                                    String id = StringArgumentType.getString(ctx, "id");
+                                                    Config.CHANNEL_ID.set(id);
+                                                    ctx.getSource().sendSuccess(
+                                                            () -> Component.literal(Config.MOD_PREFIX.get() + " §bChat channel set to §a" + id),
+                                                            false
+                                                    );
                                                     return 1;
                                                 })
                                         )
                                 )
-                                .then(Commands.literal("Bot Token")
-                                        .then(Commands.argument("Token", StringArgumentType.greedyString())
+                                .then(Commands.literal("console-channel")
+                                        .then(Commands.argument("id", StringArgumentType.word())
                                                 .executes(ctx -> {
-                                                    String Token = StringArgumentType.getString(ctx, "Token");
-
-                                                    Config.DISCORD_TOKEN.set(Token);
+                                                    String id = StringArgumentType.getString(ctx, "id");
+                                                    Config.CONSOLE_ID.set(id);
+                                                    ctx.getSource().sendSuccess(
+                                                            () -> Component.literal(Config.MOD_PREFIX.get() + " §bConsole channel set to §a" + id),
+                                                            false
+                                                    );
+                                                    return 1;
+                                                })
+                                        )
+                                )
+                                .then(Commands.literal("activity-type")
+                                        .then(Commands.argument("type", StringArgumentType.word())
+                                                .executes(ctx -> {
+                                                    String type = StringArgumentType.getString(ctx, "type");
+                                                    Config.ACTIVITY_TYPE.set(type);
+                                                    DiscordManager.reload();
+                                                    ctx.getSource().sendSuccess(
+                                                            () -> Component.literal(Config.MOD_PREFIX.get() + " §bActivity type set to §a" + type),
+                                                            false
+                                                    );
+                                                    return 1;
+                                                })
+                                        )
+                                )
+                                .then(Commands.literal("activity-text")
+                                        .then(Commands.argument("text", StringArgumentType.greedyString())
+                                                .executes(ctx -> {
+                                                    String activityText = StringArgumentType.getString(ctx, "text");
+                                                    Config.ACTIVITY_TEXT.set(activityText);
+                                                    DiscordManager.reload();
+                                                    ctx.getSource().sendSuccess(
+                                                            () -> Component.literal(Config.MOD_PREFIX.get() + " §bActivity text set to §a" + activityText),
+                                                            false
+                                                    );
+                                                    return 1;
+                                                })
+                                        )
+                                )
+                                .then(Commands.literal("invite")
+                                        .then(Commands.argument("url", StringArgumentType.greedyString())
+                                                .executes(ctx -> {
+                                                    String url = StringArgumentType.getString(ctx, "url");
+                                                    Config.DISCORD_INVITE.set(url);
+                                                    ctx.getSource().sendSuccess(
+                                                            () -> Component.literal(Config.MOD_PREFIX.get() + " §bInvite set to §a" + url),
+                                                            false
+                                                    );
                                                     return 1;
                                                 })
                                         )
                                 )
                         )
+                        .then(Commands.literal("link")
+                                .executes(context -> {
+
+                                    CommandSourceStack source =
+                                            context.getSource();
+
+                                    if (!(source.getEntity() instanceof ServerPlayer player)) {
+
+                                        source.sendSystemMessage(
+                                                Component.literal(
+                                                        "§cPlayers only."
+                                                )
+                                        );
+
+                                        return 0;
+                                    }
+
+                                    if (LinkManager.isLinked(
+                                            player.getUUID().toString()
+                                    )) {
+
+                                        source.sendSystemMessage(
+                                                Component.literal(
+                                                        Config.MOD_PREFIX.get() + "§4 Your account is already linked."
+                                                )
+                                        );
+
+                                        return 0;
+                                    }
+
+                                    String code =
+                                            LinkCodeManager.createCode(
+                                                    player.getUUID().toString(),
+                                                    player.getName().getString()
+                                            );
+
+                                    source.sendSystemMessage(
+                                            Component.literal(
+                                                    Config.MOD_PREFIX.get() + "§b DM the code §a" + code + "§b to §o§a" + DiscordManager.getBotName() + "§r§b. It expires in 10 minutes."
+                                            )
+                                    );
+
+                                    return 1;
+                                })
+                        )
+
+                        .then(Commands.literal("unlink")
+
+                                .requires(source ->
+                                        PermissionUtil.hasPermission(source)
+                                )
+
+                                .then(Commands.argument(
+                                                "target",
+                                                StringArgumentType.greedyString()
+                                        )
+
+                                        .executes(context -> {
+
+                                            String target =
+                                                    StringArgumentType.getString(
+                                                            context,
+                                                            "target"
+                                                    );
+
+                                            if (target.matches("\\d+")) {
+
+                                                if (!LinkManager.isDiscordLinked(target)) {
+                                                    context.getSource().sendFailure(
+                                                            Component.literal(
+                                                                    Config.MOD_PREFIX.get() + "§c No linked account was found for Discord ID §a" + target + "§c."
+                                                            )
+                                                    );
+                                                    return 0;
+                                                }
+
+                                                DiscordManager.clearSync(target);
+                                                LinkManager.unlinkDiscord(target);
+
+                                            } else {
+
+                                                String discordId =
+                                                        LinkManager.getDiscordIdByUsername(target);
+
+                                                if (discordId == null) {
+                                                    context.getSource().sendFailure(
+                                                            Component.literal(
+                                                                    Config.MOD_PREFIX.get() + "§c No linked account was found for §a" + target + "§c."
+                                                            )
+                                                    );
+                                                    return 0;
+                                                }
+
+                                                DiscordManager.clearSync(discordId);
+                                                LinkManager.unlinkUsername(target);
+                                            }
+
+                                            context.getSource()
+                                                    .sendSystemMessage(
+                                                            Component.literal(
+                                                                    Config.MOD_PREFIX.get() + "§b Unlinked " + "§a" + target + "§b!"
+                                                            )
+                                                    );
+
+                                            return 1;
+                                        }))
+                        )
+                        .then(Commands.argument("subcommand", StringArgumentType.greedyString())
+                                .executes(context -> {
+                                    String input = StringArgumentType.getString(context, "subcommand");
+                                    String command = input.split("\\s+", 2)[0].toLowerCase();
+
+                                    boolean protectedCommand = switch (command) {
+                                        case "bot", "reload", "servstats", "test", "console",
+                                             "admin", "config", "unlink" -> true;
+                                        default -> false;
+                                    };
+
+                                    if (protectedCommand && !PermissionUtil.hasPermission(context.getSource())) {
+                                        context.getSource().sendFailure(
+                                                Component.literal(
+                                                        Config.NO_PERMISSION.get()
+                                                                .replace("%Prefix%", Config.MOD_PREFIX.get())
+                                                )
+                                        );
+                                    } else {
+                                        context.getSource().sendFailure(
+                                                Component.literal(
+                                                        Config.MOD_PREFIX.get() + " §cUnknown subcommand. Try §b/discord help§c."
+                                                )
+                                        );
+                                    }
+                                    return 0;
+                                }))
         );
     }
 
 
     private static void sendServerStats(CommandSourceStack source) {
 
-        long maxRam = Runtime.getRuntime().maxMemory();
-        long usedRam = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        long maxRam =
+                Runtime.getRuntime()
+                        .maxMemory();
 
-        int ramPercent = (int) ((usedRam * 100) / maxRam);
+        long usedRam =
+                Runtime.getRuntime()
+                        .totalMemory()
 
-        double cpuLoad = getCpuLoad();
-        int cpuPercent = (int) (cpuLoad * 100);
+                        - Runtime.getRuntime()
+                        .freeMemory();
 
-        long usedRamMB = usedRam / (1024 * 1024);
-        long maxRamMB = maxRam / (1024 * 1024);
+        int ramPercent =
+                (int) ((usedRam * 100) / maxRam);
 
-        String usedRamStr;
-        String maxRamStr;
+        double cpuLoad =
+                getCpuLoad();
 
-        if (maxRamMB >= 1024) {
-            double usedGB = usedRamMB / 1024.0;
-            double maxGB = maxRamMB / 1024.0;
+        int cpuPercent =
+                (int) (cpuLoad * 100);
 
-            usedRamStr = String.format("%.2fGB", usedGB);
-            maxRamStr = String.format("%.2fGB", maxGB);
-        } else {
-            usedRamStr = usedRamMB + "MB";
-            maxRamStr = maxRamMB + "MB";
-        }
+        long usedRamMB =
+                usedRam / (1024 * 1024);
 
-        String ramColor = getColor(ramPercent);
-        String cpuColor = getColor(cpuPercent);
+        long maxRamMB =
+                maxRam / (1024 * 1024);
+
+        String usedRamStr =
+                formatMemory(usedRamMB);
+
+        String maxRamStr =
+                formatMemory(maxRamMB);
+
+        String ramColor =
+                getColor(ramPercent);
+
+        String cpuColor =
+                getColor(cpuPercent);
 
         source.sendSuccess(() -> Component.literal(
-                ramColor + "RAM: " + usedRamMB + "MB/" + maxRamMB + "MB (" + ramPercent + "%)"
+
+                ramColor
+                        + "RAM: "
+                        + usedRamStr
+                        + "/"
+                        + maxRamStr
+                        + " ("
+                        + ramPercent
+                        + "%)"
+
         ), false);
 
         source.sendSuccess(() -> Component.literal(
-                cpuColor + "CPU: " + cpuPercent + "%/100% (" + cpuPercent + "%)"
+
+                cpuColor
+                        + "CPU: "
+                        + cpuPercent
+                        + "%/100%"
+
         ), false);
     }
 
+    private static String formatMemory(
+            long mb
+    ) {
+
+        if (mb >= 1024) {
+
+            return String.format(
+                    "%.2fGB",
+                    mb / 1024.0
+            );
+        }
+
+        return mb + "MB";
+    }
+
     private static String getColor(int percent) {
+        if (percent >= 85) return "§4";
         if (percent >= 75) return "§c";
         if (percent >= 50) return "§6";
         if (percent <= 25) return "§a";
@@ -319,34 +604,8 @@ public class DiscordCommand {
     }
 
     public static void spikeRamForTest() {
-        new Thread(() -> {
-            try {
-                long max = Runtime.getRuntime().maxMemory();
-                long target = (long)(max * 0.91);
-
-                java.util.List<byte[]> allocations = new java.util.ArrayList<>();
-
-                while (DiscordManager.getUsedRam() < target) {
-                    allocations.add(new byte[5_000_000]);
-                    Thread.sleep(10);
-                }
-
-                System.out.println("[ForgeDiscord] RAM spike reached target");
-
-                DiscordManager.sendAlert((int)((DiscordManager.getUsedRam() * 100) / max));
-
-                Thread.sleep(2000);
-
-                allocations.clear();
-
-                System.gc();
-
-                System.out.println("[ForgeDiscord] RAM released");
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
+        DiscordManager.sendAlert(91);
+        System.out.println("[ForgeDiscord] Sent simulated high-RAM alert.");
     }
 
     private static boolean isDev(CommandSourceStack source) {
@@ -418,5 +677,19 @@ public class DiscordCommand {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public static String centerText(
+            String text
+    ) {
+
+        int width = 50;
+
+        int spaces =
+                (width - text.length()) / 2;
+
+        return " ".repeat(
+                Math.max(0, spaces)
+        ) + text;
     }
 }

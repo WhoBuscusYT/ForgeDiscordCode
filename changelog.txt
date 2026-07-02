@@ -1,14 +1,20 @@
-- added streaming to the bot's status
-- added mod prefix to config
-  - when displaying a public/private message in chat, it will display that first then the message, example: "[ForgeDiscord] Mod Reloaded"
-- added the /Discord Config command
-  - am not going to explain the sub-commands within it as that when i did that in the last update, it made the changelog hella big
- v0.0.2
-- Added console channel
-  - will output everything that is displayed in console
-  - when you send a message inside of the channel, it will execute the message as a command via console
-- made the high server usage ping only ping for RAM and not CPU
-- added the ability to use webhooks for player chats
-- fixed the discord -> minecraft chat not working
-- added it to show the death reason for dying and not just "Player died"
-- changed the way the high server usage message displays in discord
+- added the discord invite link to be shown when doing /discord
+- added linking (beta)
+- fixed it to only show one advancement message in the game chat
+- added the ability for webhooks
+- added styled text support
+  - did this because a custom advancement i made on a server printed as "§oSPEEEEEED" instead of being italics in the discord
+- moved everything into its own folder in /config/
+- added some more config files
+- fixed the status not working
+- fixed console channel
+- added /discord help
+- added more ways to display the online status
+- changed the format of a few things
+- removed the need for the JDA Library mod dependency
+- fixed some small things
+- added a no permission message
+ - configurable in config
+- added some more placeholders
+- fixed it to show as gigabytes (GB) if the RAM is over 1024 megabytes (MB)
+- added first time join message

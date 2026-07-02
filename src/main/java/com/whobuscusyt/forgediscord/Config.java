@@ -13,6 +13,9 @@ public class Config {
     public static ForgeConfigSpec.ConfigValue<String> OWNER_ID;
     public static ForgeConfigSpec.ConfigValue<String> MOD_PREFIX;
     public static ForgeConfigSpec.ConfigValue<String> CONSOLE_ID;
+    public static ForgeConfigSpec.ConfigValue<String> DISCORD_INVITE;
+    public static final ForgeConfigSpec.BooleanValue USE_WEBHOOKS;
+    public static ForgeConfigSpec.ConfigValue<String> NO_PERMISSION;
 
     public static ForgeConfigSpec.ConfigValue<String> DISCORD_TOKEN;
 
@@ -24,11 +27,21 @@ public class Config {
                 .comment(" Restart the server after updating this.")
                 .define("Bot Token", "PUT_TOKEN_HERE");
 
+        USE_WEBHOOKS = BUILDER
+                .comment(" This toggles whether you want to use webhooks for chat messages.")
+                .comment(" If you toggle this as true, each message will be its own user instead of the bot.")
+                .define("Use Webhooks", true);
+
         MOD_PREFIX = BUILDER
                 .comment(" This is the prefix that will be used in every message publically/privatly sent in chat.")
                 .comment(" The prefix supports color, but can only be done with the § symbol and cannot be colored with &.")
                 .comment(" You can set this to whatever, at whatever length you want. To my knowledge, this isn't character limited.")
                 .define("Mod Prefix", "§6[§b§lForgeDiscord§6]");
+
+        DISCORD_INVITE = BUILDER
+                .comment(" This is the invite link for your discord that will be shown when they do /discord, or /discord invite.")
+                .comment(" You can change it from discord.com/invite/server to discord.gg/server.")
+                .define("Discord Invite", "https://www.discord.com/invite/changeinforgediscord-common.toml");
 
         STATUS = BUILDER
                 .comment(" The status that the bot will be. This can be changed by ONLINE IDLE DND or INVIS")
@@ -56,6 +69,11 @@ public class Config {
         OWNER_ID = BUILDER
                 .comment(" This user ID will be pinged if the server hits 90% or more on RAM/CPU. Requires the channel ID to be set for this to work.")
                 .define("Server Owner User ID", "PUT_YOUR_DISCORD_ID");
+
+        NO_PERMISSION = BUILDER
+                .comment(" This is the message that will be shown if the user doesn't have permission to execute the command.")
+                .comment(" Use %Prefix% to use the mod prefix.")
+                .define("No Permission Message", "%Prefix% §bYou don't have permission to use that command");
 
         BUILDER.pop();
         SPEC = BUILDER.build();
