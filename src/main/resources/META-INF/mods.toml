@@ -2,11 +2,11 @@ modLoader="javafml"
 loaderVersion="${loader_version_range}"
 license="${mod_license}"
 [[mods]]
-modId="${mod_id}"
-version="${mod_version}"
-displayName="${mod_name}"
-authors="${mod_authors}"
-description='''${mod_description}'''
+modId="forgediscord"
+version="1.0.4"
+displayName="ForgeDiscord"
+authors="Obsidian Interactive"
+description='''A Forge port to the popular Spigot/Paper plugin DiscordSRV. This mod was not made by the DiscordSRV Developers'''
 [[dependencies.forgediscord]]
 modId="forge"
 mandatory=true
@@ -24,4 +24,16 @@ modId="luckperms"
 mandatory=false
 versionRange="[5.4,6)"
 ordering="AFTER"
+side="BOTH"
+[[dependencies.forgediscord]]
+modId="kotlinforforge"
+mandatory=true
+versionRange="[4.12.0,)"
+ordering="AFTER"
+side="BOTH"
+[[dependencies.forgediscord]]
+modId="obsidiancore"
+mandatory=true
+versionRange="[1.0.0]"
+ordering="BEFORE"
 side="BOTH"

@@ -1,20 +1,7 @@
-- added the discord invite link to be shown when doing /discord
-- added linking (beta)
-- fixed it to only show one advancement message in the game chat
-- added the ability for webhooks
-- added styled text support
-  - did this because a custom advancement i made on a server printed as "§oSPEEEEEED" instead of being italics in the discord
-- moved everything into its own folder in /config/
-- added some more config files
-- fixed the status not working
-- fixed console channel
-- added /discord help
-- added more ways to display the online status
-- changed the format of a few things
-- removed the need for the JDA Library mod dependency
-- fixed some small things
-- added a no permission message
- - configurable in config
-- added some more placeholders
-- fixed it to show as gigabytes (GB) if the RAM is over 1024 megabytes (MB)
-- added first time join message
+- fixed the mod not working on servers that feature Kotlin For Forge
+  - one of the employees working on the mod added a kotlin version to compile in build.gradle and it made this mod conflict with KFF
+    - to fix this, we just made the mod depend on KFF (Kotlin For Forge)
+- added the Obsidian Core mod as a dependency
+  - new core mod for all of the Obsidian Intearctive mods
+    - obsidian interactive is the trademark for all of the minecraft related stuff released by WhoBuscusYT
+- changed mod author to Obsidian Interactive
