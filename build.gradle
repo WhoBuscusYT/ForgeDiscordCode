@@ -12,7 +12,7 @@ base {
     archivesName = mod_id
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+java.toolchain.languageVersion = JavaLanguageVersion.of((findProperty('java_version') ?: '17') as int)
 
 println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
 minecraft {
@@ -160,4 +160,70 @@ tasks.build.dependsOn(tasks.named("jarJar"))
 
 tasks.jarJar.configure {
     archiveClassifier.set('all')
+}
+
+tasks.register('buildForgeMatrix') {
+    group = 'build'
+    description = 'Builds combined-range Forge jars for the multiversion compatibility matrix.'
+
+    doLast {
+        def gradlew = System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')
+                ? file('gradlew.bat').absolutePath
+                : file('gradlew').absolutePath
+
+        def outputDir = file('out/multiversion')
+        delete outputDir
+        outputDir.mkdirs()
+
+        def targets = [
+                [
+                        classifier: '1.19.3-1.20.4',
+                        java      : '17',
+                        minecraft : '1.20.4',
+                        forge     : '49.2.8',
+                        mappings  : '1.20.4',
+                        mcRange   : '[1.19.3,1.20.5)',
+                        forgeRange: '[44,50)'
+                ],
+                [
+                        classifier: '1.20.5-1.21.3',
+                        java      : '21',
+                        minecraft : '1.21.3',
+                        forge     : '53.1.11',
+                        mappings  : '1.21.3',
+                        mcRange   : '[1.20.5,1.21.4)',
+                        forgeRange: '[50,54)'
+                ]
+        ]
+
+        targets.each { target ->
+            exec {
+                commandLine gradlew,
+                        'clean',
+                        'build',
+                        "-Pjava_version=${target.java}",
+                        "-Pminecraft_version=${target.minecraft}",
+                        "-Pforge_version=${target.forge}",
+                        "-Pmapping_version=${target.mappings}",
+                        "-Pminecraft_version_range=${target.mcRange}",
+                        "-Pforge_version_range=${target.forgeRange}",
+                        "-Ploader_version_range=${target.forgeRange}"
+            }
+
+            copy {
+                from file("build/libs/${mod_id}-${mod_version}.jar")
+                into outputDir
+                rename { "${mod_id}-${mod_version}-${target.classifier}.jar" }
+            }
+
+            copy {
+                from file("build/libs/${mod_id}-${mod_version}-all.jar")
+                into outputDir
+                rename { "${mod_id}-${mod_version}-${target.classifier}-all.jar" }
+            }
+        }
+
+        println "Forge multiversion jars written to ${outputDir.absolutePath}"
+        println "NeoForge support is planned for 1.0.6."
+    }
 }

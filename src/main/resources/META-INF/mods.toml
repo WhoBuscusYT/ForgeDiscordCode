@@ -3,10 +3,10 @@ loaderVersion="${loader_version_range}"
 license="${mod_license}"
 [[mods]]
 modId="forgediscord"
-version="1.0.4"
+version="${mod_version}"
 displayName="ForgeDiscord"
-authors="Obsidian Interactive"
-description='''A Forge port to the popular Spigot/Paper plugin DiscordSRV. This mod was not made by the DiscordSRV Developers'''
+authors="${mod_authors}"
+description='''${mod_description}'''
 [[dependencies.forgediscord]]
 modId="forge"
 mandatory=true
@@ -28,12 +28,12 @@ side="BOTH"
 [[dependencies.forgediscord]]
 modId="kotlinforforge"
 mandatory=true
-versionRange="[4.12.0,)"
+versionRange="[4.10,)"
 ordering="AFTER"
 side="BOTH"
 [[dependencies.forgediscord]]
 modId="obsidiancore"
 mandatory=true
-versionRange="[1.0.0]"
+versionRange="[1.0.1]"
 ordering="BEFORE"
 side="BOTH"

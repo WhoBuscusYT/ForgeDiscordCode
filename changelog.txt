@@ -1,7 +1,16 @@
-- fixed the mod not working on servers that feature Kotlin For Forge
-  - one of the employees working on the mod added a kotlin version to compile in build.gradle and it made this mod conflict with KFF
-    - to fix this, we just made the mod depend on KFF (Kotlin For Forge)
-- added the Obsidian Core mod as a dependency
-  - new core mod for all of the Obsidian Intearctive mods
-    - obsidian interactive is the trademark for all of the minecraft related stuff released by WhoBuscusYT
-- changed mod author to Obsidian Interactive
+- updated mod version to 1.0.5
+- fixed ForgeDiscord dev/admin webhook chat not sending
+- fixed advancement messages showing twice
+- restored the RAM spike behavior for /discord test alert confirm
+- added configurable Discord game-chat console command prefix
+  - defaults to !c
+- added !playerlist in the Discord game chat channel
+- added config/ForgeDiscord/toggles.toml
+  - includes toggles for linking, advancements, console relay/commands, debug logging, chat relay, join/leave/death/server messages, update checks, webhooks, playerlist, auto-responses, nickname sync, and role sync
+- moved forgediscord-common.toml into config/ForgeDiscord
+- changed Java package to com.obsidianinteractive.forgediscord
+- changed mod author metadata to Obsidian Interactive
+- added support for these versions:
+  - 1.19.3-1.20.4
+  - 1.20.5-1.21.3
+- added MULTILOADER.md with the real Forge/NeoForge split status
